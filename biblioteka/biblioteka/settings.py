@@ -31,7 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'library.apps.BlogConfig',
+    'library.apps.LibraryConfig',
     'users.apps.UsersConfig',
     'crispy_forms',
     'django.contrib.admin',
