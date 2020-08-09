@@ -1,15 +1,41 @@
 from django.db import models
+from PIL import Image
 
 # Create your models here.
 
 class Author(models.Model):
-    a = models.CharField(("a"), max_length=50)
-
-class Book(models.Model):
-    a = models.CharField(("a"), max_length=50)
+    first_name = models.CharField(max_length=25)
+    last_name = models.CharField(max_length=25)
+    
+    def __str__(self):
+        return f'{self.first_name} {self.last_name}'
 
 class Genre(models.Model):
-    a = models.CharField(("a"), max_length=50)
+    genre = models.CharField(max_length=20)
+
+    def __str__(self):
+        return self.genre
+
+class Book(models.Model):
+    author = models.ForeignKey(Author, on_delete=models.CASCADE)
+    title = models.CharField(default="This description hasn't been added yet.",max_length=100)
+    genre = models.ManyToManyField(Genre)
+    description = models.TextField()
+    image = models.ImageField(default='book_default.jpg', upload_to='book_pics')
+    slug = models.SlugField(default='', max_length=100)
+
+    def __str__(self):
+        return self.title
+
+    def save(self):
+        super().save()
+        img = Image.open(self.image.path)
+        if img.height > 300 or img.width > 300:
+            output_size = (300, 300)
+            img.thumbnail(output_size)
+            img.save(self.image.path)
+
+
 
 class Order(models.Model):
     a = models.CharField(("a"), max_length=50)
