@@ -1,4 +1,6 @@
 from django.db import models
+from django.urls import reverse
+from django.utils.text import slugify
 from PIL import Image
 
 # Create your models here.
@@ -18,22 +20,27 @@ class Genre(models.Model):
 
 class Book(models.Model):
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
-    title = models.CharField(default="This description hasn't been added yet.",max_length=100)
+    title = models.CharField(max_length=100)
     genre = models.ManyToManyField(Genre)
-    description = models.TextField()
+    description = models.TextField(default="This description hasn't been added yet.")
     image = models.ImageField(default='book_default.jpg', upload_to='book_pics')
-    slug = models.SlugField(default='', max_length=100)
+    slug = models.SlugField(default=' ', max_length=100)
 
     def __str__(self):
         return self.title
 
-    def save(self):
-        super().save()
+    def get_absolute_url(self):
+        return reverse("library-detail", kwargs={"slug": self.slug})
+    
+    def save(self, *args, **kwargs):
+        value = self.title
+        self.slug = slugify(value, allow_unicode=True)
         img = Image.open(self.image.path)
         if img.height > 300 or img.width > 300:
             output_size = (300, 300)
             img.thumbnail(output_size)
             img.save(self.image.path)
+        super().save( *args, **kwargs)
 
 
 

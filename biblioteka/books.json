@@ -1,0 +1,62 @@
+[
+    {
+        "author":"Shinichirou",
+        "title": "Re:Zero kara Hajimeru Isekai Seikatsu",
+        "genre":"Romance"
+    },
+    {
+        "author":"Eiichiro",
+        "title": "One Piece",
+        "genre":"Adventure"
+    },
+    {
+        "title":"Fullmetal Alchemist",
+        "author":"Hiromu",
+        "genre":"Shounen"
+    },
+    {
+        "title":"Kaguya-sama wa Kokurasetai: Tensai-tachi no Renai Zunousen",
+        "author":"Aka",
+        "genre":"Romance"
+    },
+    {
+        "title":"Yahari Ore no Seishun Love Comedy wa Machigatteiru.",
+        "author":"Wataru",
+        "genre":"Romance"
+    },
+    {
+        "title":"Ookami to Koushinryou",
+        "author":"Juu",
+        "genre":"Romance"
+    },
+    {
+        "title":"Made in Abyss",
+        "author":"Akihito",
+        "genre":"Adventure"
+    },
+    {
+        "title":"Haikyuu!!",
+        "author":"Haruichi",
+        "genre":"Sports"
+    },
+    {
+        "title":"Koe no Katachi",
+        "author":"Yoshitoki",
+        "genre":"Romance"
+    },
+    {
+        "title":"3-gatsu no Lion",
+        "author":"Chika",
+        "genre":"Drama"
+    },
+    {
+        "title":"One Punch-Man",
+        "author":"ONE",
+        "genre":"Shounen"
+    },
+    {
+        "title":"Death Note",
+        "author":"Tsugumi",
+        "genre":"Drama"
+    }
+]
