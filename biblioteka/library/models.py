@@ -1,6 +1,7 @@
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
+from django.contrib.auth.models import User
 from PIL import Image
 
 # Create your models here.
@@ -12,8 +13,11 @@ class Author(models.Model):
     def __str__(self):
         return f'{self.first_name} {self.last_name}'
 
+    def get_absolute_url(self):
+        return reverse("library-create")
+
 class Genre(models.Model):
-    genre = models.CharField(max_length=20)
+    genre = models.CharField(max_length=20, unique=True)
 
     def __str__(self):
         return self.genre
@@ -31,6 +35,12 @@ class Book(models.Model):
 
     def get_absolute_url(self):
         return reverse("library-detail", kwargs={"slug": self.slug})
+
+    def get_add_to_cart_url(self):
+        return reverse("add-to-cart", kwargs={"slug": self.slug})
+    
+    def get_remove_from_cart(self):
+        return reverse("remove-from-cart", kwargs={"slug": self.slug})
     
     def save(self, *args, **kwargs):
         value = self.title
@@ -44,8 +54,19 @@ class Book(models.Model):
 
 
 
-class Order(models.Model):
-    a = models.CharField(("a"), max_length=50)
-
 class OrderBook(models.Model):
-    a = models.CharField(("a"), max_length=50)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'Order of {self.book.title}'
+    
+class Order(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    books = models.ManyToManyField(OrderBook)
+    # start_date = models.DateTimeField(auto_now_add=True)
+    # ordered_date = models.DateTimeField()
+    ordered = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'Orders for {self.user.username}'
+    

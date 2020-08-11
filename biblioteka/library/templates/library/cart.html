@@ -1,0 +1,24 @@
+  
+{% extends "library/base.html" %}
+{% block content %}
+    {% for order in orders %}
+      {% for order_book in order.books.all %}
+        <article class="media content-section">
+          <img class="rounded-circle article-img" src="{{ order_book.book.image.url }}">
+          <div class="media-body">
+            <div class="article-metadata">
+              <a class="mr-2" href="#">{{ order_book.book.author }}</a>
+              {% for genre in order_book.book.genre.all %}
+                <small class="text-muted">{{ genre }}</small>
+              {% endfor %}
+            </div>
+            <h2><a class="article-title" href="#">{{ order_book.book.title }}</a></h2>
+            <p class="article-content">{{ order_book.book.description }}</p>
+            <small class="text-muted">
+              <a class="ml-1 btn btn-outline-danger btn-sm float-right" href="{{ order_book.book.get_remove_from_cart }}"><i class="fa fa-shopping-cart"></i> Remove from Cart</a>
+            </small>
+          </div>
+        </article>
+      {% endfor %}
+    {% endfor %}
+{% endblock content %}

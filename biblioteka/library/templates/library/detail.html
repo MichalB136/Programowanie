@@ -13,7 +13,7 @@
         <h2 class="article-title">{{ book.title }}</h2>
         <p class="article-content">{{ book.description }}</p>
         <small class="text-muted">
-            <a class="ml-1 btn btn-outline-info btn-sm float-right" href="#">Add to Cart</a>
+            <a class="ml-1 btn btn-outline-info btn-sm float-right" href="{{ book.get_add_to_cart_url }}"><i class="fa fa-shopping-cart"></i> Add to Cart</a>
             {% if user.is_staff %}
                 <a class="ml-1 btn btn-outline-danger btn-sm float-right" href="{% url 'library-delete' book.slug %}">Delete</a>
                 <a class="ml-1 btn btn-outline-info btn-sm float-right" href="{% url 'library-update' book.slug %}">Update</a>

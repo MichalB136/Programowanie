@@ -12,5 +12,11 @@
               <button class="btn btn-outline-info float-right" type="submit">Add Book</button>
           </div>
       </form>
+        <div class="border-top pt-3">
+            <small class="text-muted">
+                New Author? <a class="ml-2" href="{% url 'author-create' %}">Add Author Now</a><br>
+                No Genre? <a class="ml-2" href="{% url 'genre-create' %}">Add Genre Now</a>
+            </small>
+        </div>
     </div>
 {% endblock content %}
