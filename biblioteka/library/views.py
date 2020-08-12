@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
+from django.utils import timezone
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from .models import Book, Author, Genre, Order, OrderBook
 
@@ -9,6 +10,7 @@ class BookHomeView(ListView):
     template_name = 'library/home.html'
     context_object_name = 'books'
     ordering = ['title']
+    paginate_by = 5
 
 class BookDetailView(DetailView):
     model = Book
@@ -81,9 +83,14 @@ class GenreCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         messages.success(self.request, f'Author has been created')
         return super().form_valid(form)
 
+class CartListView(ListView):
+    model = Order
+    template_name = 'library/cart.html'
+    context_object_name = 'orders'
+
 def add_to_cart(request, slug):
     book = get_object_or_404(Book, slug=slug)
-    order_book, created = OrderBook.objects.get_or_create(book=book)
+    order_book, created = OrderBook.objects.get_or_create(user = request.user, book=book)
     order_qs = Order.objects.filter(user=request.user, ordered=False)
     if order_qs.exists():
         order = order_qs[0]
@@ -93,7 +100,8 @@ def add_to_cart(request, slug):
         else:
             messages.warning(request, f'Order already exists!')
     else:
-        order = Order.objects.create(user=request.user)
+        ordered_date = timezone.now()
+        order = Order.objects.create(user=request.user, ordered_date=ordered_date)
         order.books.add(order_book)
     return redirect('library-detail', slug= slug)
     
@@ -105,6 +113,9 @@ def remove_from_cart(request, slug):
         if order.books.filter(book__slug=book.slug).exists():
             order_book = OrderBook.objects.filter(book=book)[0]
             order.books.remove(order_book)
+            order_book.delete()
+            if order.books.count() == 0:
+                order.delete()
             messages.success(request, f'Order has been removed!')
         else:
             messages.warning(request, f'Order does not containt this book!')
@@ -114,7 +125,17 @@ def remove_from_cart(request, slug):
         return redirect('cart')
     return redirect('cart')
 
-class CartListView(ListView):
-    model = Order
-    template_name = 'library/cart.html'
-    context_object_name = 'orders'
+def add_to_account(request):
+    user = request.user
+    order_qs = Order.objects.filter(user=user, ordered=False)
+    if order_qs.exists():
+        order = order_qs[0]
+        order_of_books = order.books.filter(user=user)
+        for book_order in order_of_books:
+            user.profile.books.add(book_order.book)
+        messages.success(request, f'Books has benn added to your profile')
+        order.delete()
+    else:
+        messages.warning(request, f"Order dosen't exists")
+        return redirect('cart')
+    return redirect('cart')

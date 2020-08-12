@@ -1,0 +1,19 @@
+{% extends "library/base.html" %}
+{% block content %}
+    {% for book in user_books %}
+        <article class="media content-section">
+            <img class="rounded-circle article-img" src="{{ book.image.url }}">
+            <div class="media-body">
+            <div class="article-metadata">
+                <a class="mr-2" href="#">{{ book.author }}</a>
+                {% for genre in book.genre.all %}
+                    <small class="text-muted">{{ genre }}</small>
+                {% endfor %}
+            </div>
+            <h2 class="article-title">{{ book.title }}</h2>
+            <p class="article-content">{{ book.description }}</p>
+
+            </div>
+        </article>
+    {% endfor %}
+{% endblock content %}

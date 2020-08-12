@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm
+from django.views.generic import DetailView, ListView
+from .models import Profile
 
 
 def register(request):
@@ -40,3 +42,13 @@ def profile(request):
     }
 
     return render(request, 'users/profile.html', context)
+
+@login_required
+def my_books(request):
+    user_profile = Profile.objects.filter(user=request.user)
+    if user_profile.exists():
+        u_profile = user_profile[0]
+        user_books = u_profile.books.all()
+        context = {'user_books': user_books}
+
+    return render(request, 'users/my_books.html', context)

@@ -55,7 +55,9 @@ class Book(models.Model):
 
 
 class OrderBook(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    ordered = models.BooleanField(default=False)
 
     def __str__(self):
         return f'Order of {self.book.title}'
@@ -63,10 +65,13 @@ class OrderBook(models.Model):
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     books = models.ManyToManyField(OrderBook)
-    # start_date = models.DateTimeField(auto_now_add=True)
-    # ordered_date = models.DateTimeField()
+    start_date = models.DateTimeField(auto_now_add=True)
+    ordered_date = models.DateTimeField()
     ordered = models.BooleanField(default=False)
 
     def __str__(self):
         return f'Orders for {self.user.username}'
+
+    def get_add_to_account(self):
+        return reverse("add-to-account")
     
