@@ -24,3 +24,13 @@ class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = ['image']
+
+class ProfileCreditForm(forms.Form):
+    CHOICES = (('0', 0),
+            ('5', 5),
+            ('10', 10),
+            ('15', 15),
+            ('25', 25),)
+    credit = forms.ChoiceField(widget=forms.Select(),
+                                         choices=CHOICES, required=False)
+    

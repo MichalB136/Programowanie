@@ -4,10 +4,10 @@
     {% if user.is_authenticated %}
         <h2>You are already logged in</h2>
         <div class="border-top pt-3">
-        <p class="text-muted">
-            <a href="{% url 'library-home' %}">Go to Home Page</a>
-        </p>
-    </div>
+            <p class="text-muted">
+                <a href="{% url 'library-home' %}">Go to Home Page</a>
+            </p>
+        </div>
     {% else %}
     <div class="content-section">
         <form method="POST">

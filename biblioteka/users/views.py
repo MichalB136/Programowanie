@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm
+from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ProfileCreditForm
 from django.views.generic import DetailView, ListView
 from .models import Profile
 
@@ -42,6 +42,22 @@ def profile(request):
     }
 
     return render(request, 'users/profile.html', context)
+
+@login_required
+def add_credit(request):
+    if request.method == 'POST':
+        c_form = ProfileCreditForm(request.POST)
+        if c_form.is_valid():
+            credit = float(c_form.cleaned_data.get('credit'))
+            user_credit = request.user.profile.credit
+            user_credit += credit
+            request.user.profile.credit = user_credit
+            request.user.profile.save()
+            messages.success(request, f'Credit has been added successfully!')
+            return redirect('profile')
+    else:
+        c_form = ProfileCreditForm()
+    return render(request, 'users/add_credit.html', {'c_form': c_form})
 
 @login_required
 def my_books(request):
