@@ -9,6 +9,7 @@ from PIL import Image
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     image = models.ImageField(default='default.jpg', upload_to='profile_pics')
+    credit = models.FloatField(default=0)
     books = models.ManyToManyField(Book)
     
     def __str__(self):

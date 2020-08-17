@@ -28,8 +28,9 @@ class Book(models.Model):
     genre = models.ManyToManyField(Genre)
     description = models.TextField(default="This description hasn't been added yet.")
     image = models.ImageField(default='book_default.jpg', upload_to='book_pics')
+    price = models.FloatField(default=0)
     slug = models.SlugField(default=' ', max_length=100)
-
+    
     def __str__(self):
         return self.title
 

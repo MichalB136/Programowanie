@@ -10,6 +10,7 @@
               {% for genre in book.genre.all %}
                 <small class="text-muted">{{ genre }}</small>
               {% endfor %}
+              <small class="border rounded text-info float-right">&nbsp; {{ book.price }} $&nbsp;</small>
             </div>
             <h2><a class="article-title" href="{% url 'library-detail' book.slug %}">{{ book.title }}</a></h2>
             <p class="article-content">{{ book.description }}</p>

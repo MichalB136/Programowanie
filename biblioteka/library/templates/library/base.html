@@ -39,7 +39,7 @@
                   <a class="nav-item nav-link btn-sm btn-info ml-1" href="{% url 'library-create' %}">New Book</a>
                 {% endif %}
                 <a class="nav-item nav-link btn-sm btn-info ml-1" href="{% url 'my-books' %}">My Books</a>
-                <small class="nav-item nav-link btn-sm btn-danger ml-1">{{ request.user|cart_item_count }}</small>
+                <small class="nav-item nav-link btn-sm btn-danger ml-1">{{ request.user|item_count }}</small>
                 <a class="nav-item nav-link btn-sm btn-info" href="{% url 'cart' %}"><i class="fa fa-shopping-cart"></i> Cart</a>
                 <a class="nav-item nav-link btn-sm btn-info ml-1" href="{% url 'profile' %}">Profile</a>
                 <a class="nav-item nav-link btn-sm btn-info ml-1" href="{% url 'logout' %}">Logout</a>

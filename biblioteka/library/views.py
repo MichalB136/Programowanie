@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
@@ -83,28 +84,34 @@ class GenreCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         messages.success(self.request, f'Author has been created')
         return super().form_valid(form)
 
-class CartListView(ListView):
+class CartListView(LoginRequiredMixin, ListView):
     model = Order
     template_name = 'library/cart.html'
     context_object_name = 'orders'
 
+@login_required
 def add_to_cart(request, slug):
+    logged_user = request.user
     book = get_object_or_404(Book, slug=slug)
-    order_book, created = OrderBook.objects.get_or_create(user = request.user, book=book)
-    order_qs = Order.objects.filter(user=request.user, ordered=False)
-    if order_qs.exists():
-        order = order_qs[0]
-        if not order.books.filter(book__slug=book.slug).exists():
-            order.books.add(order_book)
-            messages.success(request, f'Order has been created!')
-        else:
-            messages.warning(request, f'Order already exists!')
+    order_book, created = OrderBook.objects.get_or_create(user = logged_user, book=book)
+    order_qs = Order.objects.filter(user=logged_user, ordered=False)
+    if book in logged_user.profile.books.all():
+        messages.warning(request, f'You already have that book')
     else:
-        ordered_date = timezone.now()
-        order = Order.objects.create(user=request.user, ordered_date=ordered_date)
-        order.books.add(order_book)
+        if order_qs.exists():
+            order = order_qs[0]
+            if not order.books.filter(book__slug=book.slug).exists():
+                order.books.add(order_book)
+                messages.success(request, f'Order has been created!')
+            else:
+                messages.warning(request, f'Order already exists!')
+        else:
+            ordered_date = timezone.now()
+            order = Order.objects.create(user=logged_user, ordered_date=ordered_date)
+            order.books.add(order_book)
     return redirect('library-detail', slug= slug)
-    
+
+@login_required    
 def remove_from_cart(request, slug):
     book = get_object_or_404(Book, slug=slug)
     order_qs = Order.objects.filter(user=request.user, ordered=False)
@@ -125,6 +132,7 @@ def remove_from_cart(request, slug):
         return redirect('cart')
     return redirect('cart')
 
+@login_required
 def add_to_account(request):
     user = request.user
     order_qs = Order.objects.filter(user=user, ordered=False)
