@@ -3,7 +3,7 @@
 {% block content %}
     {% for book in books %}
         <article class="media content-section">
-          <img class="rounded-circle article-img" src="{{ book.image.url }}">
+          <img class="h-50 rounded-circle article-img" src="{{ book.image.url }}">
           <div class="media-body">
             <div class="article-metadata">
               <a class="mr-2" href="#">{{ book.author }}</a>
@@ -17,7 +17,7 @@
           </div>
         </article>
     {% endfor %}
-    <nav aria-label="Page navigation example">
+    {% comment %} <nav aria-label="Page navigation example">
       <ul class="pagination justify-content-center">
         
           {% if page_obj.has_previous %}
@@ -42,5 +42,5 @@
           <li class="page-item disabled"><a class="page-link" href="#">Last</a></li>
         {% endif %}
       </ul>
-    </nav>  
+    </nav>   {% endcomment %}
 {% endblock content %}

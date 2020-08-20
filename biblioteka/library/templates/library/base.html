@@ -32,6 +32,12 @@
               <a class="nav-item nav-link" href="{% url 'library-home' %}">Home</a>
               <a class="nav-item nav-link" href="#">About</a>
             </div>
+              {% comment %} <nav class="navbar navbar-dark bg-steel"> {% endcomment %}
+              <form class="form-inline" method="GET">
+                <input class="form-control mr-sm-1" type="search" placeholder="Search" aria-label="Search" name="search">
+                <button class="btn btn-success my-2 mr-sm-2" type="submit">Search</button>
+              </form>
+            {% comment %} </nav> {% endcomment %}
             <!-- Navbar Right Side -->
             <div class="navbar-nav">
               {% if user.is_authenticated %}

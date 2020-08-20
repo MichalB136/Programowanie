@@ -2,16 +2,38 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Q
 from django.utils import timezone
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from .models import Book, Author, Genre, Order, OrderBook
+from operator import attrgetter
+from .models import Book, Author, Genre, Order, OrderBook, BookComments
 
 class BookHomeView(ListView):
     model = Book
     template_name = 'library/home.html'
     context_object_name = 'books'
     ordering = ['title']
-    paginate_by = 5
+
+    def get_queryset(self):
+        context = {}
+        query = ""
+        if self.request.GET:
+            query = self.request.GET['search']
+            context['query'] = str(query)
+            search_list = sorted(get_books_queryset(query), key=attrgetter('title'))
+            return search_list
+        return super().get_queryset()
+    
+
+def get_books_queryset(query=None):
+    queryset = []
+    queries = query.split(" ")
+    for q in queries:
+        books = Book.objects.filter(title__icontains=q).distinct()
+        for book in books:
+            queryset.append(book)
+        return list(set(queryset))
+
 
 class BookDetailView(DetailView):
     model = Book
@@ -147,3 +169,14 @@ def add_to_account(request):
         messages.warning(request, f"Order dosen't exists")
         return redirect('cart')
     return redirect('cart')
+
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    model = BookComments
+    template_name = 'library/create_comment.html'
+    fields = ['book','content']
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        form.instance.post_date = timezone.now()
+        messages.success(self.request, f'You added new comment')
+        return super().form_valid(form)

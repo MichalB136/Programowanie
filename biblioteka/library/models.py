@@ -1,7 +1,9 @@
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.text import slugify
 from django.contrib.auth.models import User
+from datetime import datetime, timedelta
 from PIL import Image
 
 # Create your models here.
@@ -75,4 +77,17 @@ class Order(models.Model):
 
     def get_add_to_account(self):
         return reverse("add-to-account")
+
+class BookComments(models.Model):
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    post_date = models.DateTimeField('date published')
+    content = models.TextField()
+
+    def __str__(self):
+        return f"{self.author.username}'s comment of {self.book}"
+
+    def get_absolute_url(self):
+        return reverse("library-home")
+
     
