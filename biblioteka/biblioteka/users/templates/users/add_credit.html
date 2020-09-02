@@ -1,0 +1,35 @@
+{% extends "library/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="content-section">
+      <div class="media">
+        <img class="rounded-circle account-img" src="{{ user.profile.image.url }}">
+        <div class="media-body">
+          <h2 class="account-heading">{{ user.username }}</h2>
+          <p class="text-secondary">{{ user.email }}</p>
+          <p class="border rounded text float-left">&nbsp;Your Credit: {{ user.profile.credit }} $ &nbsp;</p>
+        </div>
+      </div>
+      <form method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          <fieldset class="form-group">
+              <legend class="border-bottom mb-4">How much credit you want to add?</legend>
+              {{ c_form|crispy }}
+          </fieldset>
+          <div class="form-group">
+              <button class="btn btn-outline-info" type="submit">Add Credit</button>
+          </div>
+      </form>
+    </div>
+{% endblock content %}
+      {% comment %} <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="inputGroupCredit01">Options</label>
+        </div>
+        <select class="custom-select" id="inputGroupCredit01">
+            <option selected>How much credit you want to add?</option>
+            <option value="5">One</option>
+            <option value="10">Two</option>
+            <option value="25">Three</option>
+        </select>
+      </div> {% endcomment %}

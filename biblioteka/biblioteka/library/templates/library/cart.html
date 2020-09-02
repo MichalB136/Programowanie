@@ -1,0 +1,38 @@
+{% extends "library/base.html" %}
+{% load cart_template_tags %}
+{% block content %}
+    {% if orders %}
+      {% for order in orders %}
+        {% for order_book in order.books.all %}
+          <article class="media content-section">
+            <img class="rounded-circle article-img" src="{{ order_book.book.image.url }}">
+            <div class="media-body">
+              <div class="article-metadata">
+                <a class="mr-2" href="#">{{ order_book.book.author }}</a>
+                {% for genre in order_book.book.genre.all %}
+                  <small class="text-muted">{{ genre }}</small>
+                {% endfor %}
+              </div>
+              <h2><a class="article-title" href="#">{{ order_book.book.title }}</a></h2>
+              <p class="article-content">{{ order_book.book.description }}</p>
+              <small class="text-muted">
+                <a class="ml-1 btn btn-outline-danger btn-sm float-right" href="{{ order_book.book.get_remove_from_cart }}"><i class="fa fa-shopping-cart"></i> Remove from Cart</a>
+              </small>
+            </div>
+          </article>
+        {% endfor %}
+      {% endfor %}
+      <div class="form-body">
+        <a class="ml-1 btn btn-info btn-lg float-right" href=" {% url 'add-to-account' %} ">Buy</a>
+        <small class="btn btn-lg btn-warning float-right">Price: {{ request.user|moja_funkcja_liczaca_cene }} $</small>
+      </div>
+    {% else %}
+     <article class="media content-section">
+      <div class="media-body">
+       <h2 class="article-title">Cart is empty!</h2>
+       <small class="article-content"><a href="{% url 'library-home' %}">Go to Home Page</a></smaller>
+      </div>
+     </article>
+    {% endif %}
+
+{% endblock content %}

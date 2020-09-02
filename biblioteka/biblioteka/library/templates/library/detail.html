@@ -1,0 +1,56 @@
+  
+{% extends "library/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <article class="media content-section">
+        <img class="h-50 rounded-circle article-img" src="{{ book.image.url }}">
+        <div class="media-body">
+            <div class="article-metadata">
+                <a class="mr-2" href="#">{{ book.author }}</a>
+                {% for genre in book.genre.all %}
+                    <small class="text-muted">{{ genre }}</small>
+                {% endfor %}
+            </div>
+            <h2 class="article-title">{{ book.title }}</h2>
+            <p class="article-content">{{ book.description }}</p>
+            <small class="text-muted">
+                <a class="ml-1 btn btn-outline-info btn-sm float-right" href="{{ book.get_add_to_cart_url }}"><i class="fa fa-shopping-cart"></i> Add to Cart</a>
+                {% if user.is_staff %}
+                    <a class="ml-1 btn btn-outline-danger btn-sm float-right" href="{% url 'library-delete' book.slug %}">Delete</a>
+                    <a class="ml-1 btn btn-outline-info btn-sm float-right" href="{% url 'library-update' book.slug %}">Update</a>
+                {% endif %}
+            </small>
+        </div>
+    </article>
+    <ul class="list-group">
+        <p class="list-group-item article-content"><b>Comment section</b></p>
+        <li class="list-group-item">
+            {% if book.comments.all %}
+                {% for comment in book.comments.all %}
+                    <div class="border rounded media-body mt-2">
+                    <small><img class="rounded-circle article-img float-left" src="{{ comment.author.profile.image.url }}"></small>
+                    <div class="article-metadata">
+                        <a class="mr-2" href="#">{{ comment.author.username}}</a>
+                        <small class="text-muted">{{ comment.post_date|date:"M d, H:i" }}</small>
+                    </div>
+                    <p class="article-content">{{ comment.content }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="list-group-item article-content">There is no comments yet in this section.</p>
+            {% endif %}
+            {% if user.is_authenticated %}
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <fieldset class="form-group list-group-item mt-2">
+                    {{ comment_form|crispy }}
+                </fieldset>
+                <div class="form-group">
+                    <button class="mt-2 btn btn-outline-success btn-sm float-right" type="submit">Add Comment</button>
+                </div>
+            </form>
+                {% comment %} <a class="mt-2 btn btn-outline-success btn-sm float-right" href="{% url 'library-new-comment' book.slug %}">Add Comment</a> {% endcomment %}
+            {% endif %}
+        </li>
+    </ul>
+{% endblock content %}

@@ -1,0 +1,35 @@
+[
+    {
+        "genre":"Action"
+    },
+    {
+        "genre":"Adventure"
+    },
+    {
+        "genre":"Drama"
+    },
+    {
+        "genre":"Fantasy"
+    },
+    {
+        "genre":"Mystery"
+    },
+    {
+        "genre":"Romance"
+    },
+    {
+        "genre":"School"
+    },
+    {
+        "genre":"Sci-Fi"
+    },
+    {
+        "genre":"Shounen"
+    },
+    {
+        "genre":"Slice of Life"
+    },
+    {
+        "genre":"Sports"
+    }
+]
