@@ -1,5 +1,6 @@
   
 {% extends "library/base.html" %}
+{% load crispy_forms_tags %}
 {% block content %}
     <article class="media content-section">
         <img class="h-50 rounded-circle article-img" src="{{ book.image.url }}">
@@ -39,7 +40,16 @@
                 <p class="list-group-item article-content">There is no comments yet in this section.</p>
             {% endif %}
             {% if user.is_authenticated %}
-                <a class="mt-2 btn btn-outline-success btn-sm float-right" href="{% url 'library-new-comment' book.slug %}">Add Comment</a>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <fieldset class="form-group list-group-item mt-2">
+                    {{ comment_form|crispy }}
+                </fieldset>
+                <div class="form-group">
+                    <button class="mt-2 btn btn-outline-success btn-sm float-right" type="submit">Add Comment</button>
+                </div>
+            </form>
+                {% comment %} <a class="mt-2 btn btn-outline-success btn-sm float-right" href="{% url 'library-new-comment' book.slug %}">Add Comment</a> {% endcomment %}
             {% endif %}
         </li>
     </ul>

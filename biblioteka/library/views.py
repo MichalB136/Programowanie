@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from operator import attrgetter
 from .models import Book, Author, Genre, Order, OrderBook, BookComments
+from .forms import CommentCreateForm
 
 class BookHomeView(ListView):
     model = Book
@@ -35,9 +36,9 @@ def get_books_queryset(query=None):
         return list(set(queryset))
 
 
-class BookDetailView(DetailView):
-    model = Book
-    template_name = 'library/detail.html'
+# class BookDetailView(DetailView):
+#     model = Book
+#     template_name = 'library/detail.html'
 
 class BookUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Book
@@ -180,3 +181,23 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         form.instance.post_date = timezone.now()
         messages.success(self.request, f'You added new comment')
         return super().form_valid(form)
+
+@login_required
+def book_detail_comment_view(request, slug):
+    book = get_object_or_404(Book, slug=slug)
+    new_comment = BookComments
+
+    if request.method == 'POST':
+        comment_form = CommentCreateForm(request.POST, instance=request.user)
+        if comment_form.is_valid():
+            comment_form.save()
+            messages.success(request, f'You added new comment!')
+            return redirect('library-detail', slug=slug)
+    else: 
+        comment_form = CommentCreateForm()
+
+    context = {
+        'book': book,
+        'comment_form': comment_form
+    }
+    return render(request, 'library/detail.html', context)
