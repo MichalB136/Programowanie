@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ProfileCreditForm
 from django.views.generic import DetailView, ListView
 from .models import Profile
@@ -68,3 +69,9 @@ def my_books(request):
         context = {'user_books': user_books}
 
     return render(request, 'users/my_books.html', context)
+
+class UsersListView(ListView):
+    model = User
+    template_name = 'users/list_of_users.html'
+    context_object_name = 'users'
+    

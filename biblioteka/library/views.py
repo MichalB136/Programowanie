@@ -188,9 +188,13 @@ def book_detail_comment_view(request, slug):
     new_comment = BookComments
 
     if request.method == 'POST':
-        comment_form = CommentCreateForm(request.POST, instance=request.user)
+        comment_form = CommentCreateForm(request.POST)
         if comment_form.is_valid():
-            comment_form.save()
+            comment = comment_form.save(commit=False)
+            comment.author = request.user
+            comment.book = book
+            comment.post_date = timezone.now()
+            comment.save()
             messages.success(request, f'You added new comment!')
             return redirect('library-detail', slug=slug)
     else: 
