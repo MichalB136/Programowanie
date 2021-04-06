@@ -51,7 +51,10 @@ class MyGradientBoosting():
         # inicjalizacja procesu
         self.get_loss_func()
         self.estimators_ = np.empty((self.n_estimators, 1), dtype=np.object)
+        self.residual_ = np.empty((self.n_estimators, 1), dtype=np.float64)
+        self.gamma_ = np.empty((self.n_estimators, 1), dtype=np.float64)
         self.estimators = np.zeros(X.shape[0])
+        self._mean_y = np.mean(y)
         self.estimators[0] = self.loss_.get_init_raw_prediciton(y)
 
     def pseudo_res(self, i, y):
@@ -64,7 +67,7 @@ class MyGradientBoosting():
     def _fit_stage(self, i, X, y, learning_rate, max_depth,
                    sample_weight, sample_mask, random_state):
         #Fit weka learner 
-        residual = self.pseudo_res(i, y)
+        self.residual_[i] = self.pseudo_res(i, y)
 
         tree = DecisionTreeRegressor(
             criterion=self.criterion,
@@ -80,10 +83,15 @@ class MyGradientBoosting():
             random_state=random_state,
             ccp_alpha=self.ccp_alpha)
         
-        tree.fit(X, residual, sample_weight=sample_weight, 
+        tree.fit(X, self.residual_[i], sample_weight=sample_weight, 
                  check_input=False)
 
         self.estimators_[i] = tree
 
+    def compute(self, i, y):
+        self.gamma_[i] = -2 * self.residual_[i] * (self.estimators_[i - 1] + self._mean_y * self.residual_[i])
+        #sprawdz rownanie 
+        
+        
 
         
