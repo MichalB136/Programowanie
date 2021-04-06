@@ -21,13 +21,26 @@ class SquareLossFunction():
 
 class MyGradientBoosting():
 
-    def __init__(self, loss='square', learning_rate=0.1, max_depth=3, 
-                 n_estimators=100, n_classes=1):
+    def __init__(self, loss, learning_rate, max_depth, 
+                 n_estimators, n_classes, criterion, min_samples_split, 
+                 min_samples_leaf, min_weight_fraction_leaf, min_impurity_decrease,
+                 min_impurity_split, max_features, random_state, ccp_alpha,
+                 max_lead_nodes=None):
         self.learnig_rate = learning_rate
         self.loss = loss
         self.max_depth = max_depth
         self.n_estimators = n_estimators
         self.n_classes = n_classes
+        self.criterion = criterion
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
+        self.min_impurity_decrease = min_impurity_decrease
+        self.min_impurity_split = min_impurity_split
+        self.max_features = max_features
+        self.max_leaf_nodes = max_lead_nodes
+        self.random_state = random_state
+        self.ccp_alpha = ccp_alpha
 
     def get_loss_func(self):
         if self.loss == 'square':
@@ -37,17 +50,40 @@ class MyGradientBoosting():
     def initialize(self, X, y):
         # inicjalizacja procesu
         self.get_loss_func()
+        self.estimators_ = np.empty((self.n_estimators, 1), dtype=np.object)
         self.estimators = np.zeros(X.shape[0])
-        self.estimators[0] = self.loss_.get_init_raw_prediciton(y.values)
+        self.estimators[0] = self.loss_.get_init_raw_prediciton(y)
 
     def pseudo_res(self, i, y):
         p_val = self.estimators[i - 1]
         #Compute pseudo-residual
-        residual = [-(self.loss_(y_val, p_val)) for y_val in y.values] 
+        residual = [-(self.loss_(y_val, p_val)) for y_val in y] 
+        residual = np.asarray(residual, dtype=np.float64)
         return residual
 
-    def fit_stage(self, X, y, learning_rate, max_depth):
-        #zrob drzewka jako pseuda residuale
-        pass
+    def _fit_stage(self, i, X, y, learning_rate, max_depth,
+                   sample_weight, sample_mask, random_state):
+        #Fit weka learner 
+        residual = self.pseudo_res(i, y)
+
+        tree = DecisionTreeRegressor(
+            criterion=self.criterion,
+            splitter='best',
+            max_depth=self.max_depth,
+            min_samples_split=self.min_samples_split,
+            min_samples_leaf=self.min_samples_leaf,
+            min_weight_fraction_leaf=self.min_weight_fraction_leaf,
+            min_impurity_decrease=self.min_impurity_decrease,
+            min_impurity_split=self.min_impurity_split,
+            max_features=self.max_features,
+            max_leaf_nodes=self.max_leaf_nodes,
+            random_state=random_state,
+            ccp_alpha=self.ccp_alpha)
+        
+        tree.fit(X, residual, sample_weight=sample_weight, 
+                 check_input=False)
+
+        self.estimators_[i] = tree
+
 
         
