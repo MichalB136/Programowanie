@@ -7,7 +7,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.datasets import load_boston, make_hastie_10_2, make_classification
 from sklearn.metrics import mean_absolute_error
 #%%
-from MyBoostingClassifier import MyGradientBoosting, SquareLossFunction
+from MyBoostingClassifier import MyGradientBoosting, MeanSquareLossFunction
 #%%
 d = {'age': [5,11,14,8,12,10], 
      'location': [5,12,6,4,9,11], 
@@ -24,13 +24,15 @@ y = y.to_numpy(dtype=np.float64)
 #%%
 regresor = MyGradientBoosting(loss='square', learning_rate=0.1, max_depth=5, n_estimators=10,
                               n_classes=1, criterion='mse', min_samples_split=2,
+                              init = None,
                               min_samples_leaf = 1,min_weight_fraction_leaf=0.0, 
                               min_impurity_decrease=0, min_impurity_split=None,
                               max_features=None, random_state=None, ccp_alpha=0.0)
-regresor.initialize(X, y)
+regresor.fit(X, y)
 # test = regresor.pseudo_res(1, y)
-regresor.fit_stage(1, X, y, 0.1, 5, None, None, None)
-print(regresor.estimators_[1])
+# regresor.fit_stage(1, X, y, 5, None, None, None)
+# regresor.compute(1, y)
+
 #%%
 # boston = load_boston()
 # X = pd.DataFrame(boston.data, columns=boston.feature_names)
