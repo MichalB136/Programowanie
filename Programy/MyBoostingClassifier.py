@@ -10,7 +10,10 @@ class MeanSquareLossFunction():
     def __call__(self, y, raw_predictions, sample_weight=None):
         raw_predictions = raw_predictions.ravel()
         if sample_weight is None:
-            return -1 * sum((y - raw_predictions))
+            return np.mean((y - raw_predictions.ravel()) ** 2)
+        else:
+            return (1 / sample_weight.sum() * np.sum(
+                sample_weight * ((y - raw_predictions.ravel()) ** 2)))
 
     def init_estimator(self):
         return DummyRegressor(strategy='mean')
@@ -19,6 +22,8 @@ class MeanSquareLossFunction():
         predictions = estimator.predict(X)
         return predictions.reshape(-1,1).astype(np.float64)
 
+    def negative_gradient(self, y, raw_prediction):
+        return y - raw_prediction
 
 
 class MyGradientBoosting():
@@ -66,38 +71,34 @@ class MyGradientBoosting():
         residual = np.asarray(residual, dtype=np.float64)
         return residual
 
-    def _fit_stage(self, i, X, y, max_depth,
-                   sample_weight, sample_mask, random_state):
-        #Fit weka learner 
-        self.residual_[i] = self.pseudo_res(i, y)
+    # def fit_stage(self, X, y, max_depth,
+    #                sample_weight, sample_mask, random_state):
+    #     #Fit weka learner 
+    #     self.residual_[i] = self.pseudo_res(i, y)
 
-        tree = DecisionTreeRegressor(
-            criterion=self.criterion,
-            splitter='best',
-            max_depth=self.max_depth,
-            min_samples_split=self.min_samples_split,
-            min_samples_leaf=self.min_samples_leaf,
-            min_weight_fraction_leaf=self.min_weight_fraction_leaf,
-            min_impurity_decrease=self.min_impurity_decrease,
-            min_impurity_split=self.min_impurity_split,
-            max_features=self.max_features,
-            max_leaf_nodes=self.max_leaf_nodes,
-            random_state=random_state,
-            ccp_alpha=self.ccp_alpha)
+    #     tree = DecisionTreeRegressor(
+    #         criterion=self.criterion,
+    #         splitter='best',
+    #         max_depth=self.max_depth,
+    #         min_samples_split=self.min_samples_split,
+    #         min_samples_leaf=self.min_samples_leaf,
+    #         min_weight_fraction_leaf=self.min_weight_fraction_leaf,
+    #         min_impurity_decrease=self.min_impurity_decrease,
+    #         min_impurity_split=self.min_impurity_split,
+    #         max_features=self.max_features,
+    #         max_leaf_nodes=self.max_leaf_nodes,
+    #         random_state=random_state,
+    #         ccp_alpha=self.ccp_alpha)
         
-        tree.fit(X, self.residual_[i], sample_weight=sample_weight, 
-                 check_input=False)
+    #     tree.fit(X, self.residual_[i], sample_weight=sample_weight, 
+    #              check_input=False)
 
-        self.estimators_[i] = tree
-
-    def compute(self, i, y):
-        for k, val_k in enumerate(y):
-            self.gamma_[i] =+ -2 * self.residual_[i][k] * \
-            (self.residual_[i][k] * self._mean_y + val_k - self.estimators[i - 1])
-        # self.gamma_[i] = sum(self.residual_[i] * \
-        #     (self.residual_[i] * self._mean_y + y - self.estimators[i - 1]))
-        #sprawdz rownanie 
+    #     self.estimators_ = tree
     
+    def fit_stages(self, X, y, raw_predictions):
+        
+        residuals = self.loss_.negative_gradient(y, raw_predictions)
+        return residuals
     # def update_model(self, i, learning_rate):
     #     self.estimators[i] = self.estimators[i - 1] + learning_rate * \
     #         self.gamma_
@@ -117,7 +118,9 @@ class MyGradientBoosting():
                     self.init_.fit(X,y)
 
                 raw_predicitons = self.loss_.get_init_raw_prediciton(X, self.init_)
-
+                print(raw_predicitons)
         #fit stage funckja?
-        
+        n_stages = self.fit_stages(X, y, raw_predicitons)
+
+        return n_stages
         #return raw_predicitons wyplute na konic calego algorytmu?

@@ -28,7 +28,7 @@ regresor = MyGradientBoosting(loss='square', learning_rate=0.1, max_depth=5, n_e
                               min_samples_leaf = 1,min_weight_fraction_leaf=0.0, 
                               min_impurity_decrease=0, min_impurity_split=None,
                               max_features=None, random_state=None, ccp_alpha=0.0)
-regresor.fit(X, y)
+test = regresor.fit(X, y)
 # test = regresor.pseudo_res(1, y)
 # regresor.fit_stage(1, X, y, 5, None, None, None)
 # regresor.compute(1, y)
