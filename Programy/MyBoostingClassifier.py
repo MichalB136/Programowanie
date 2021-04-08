@@ -95,9 +95,31 @@ class MyGradientBoosting():
 
     #     self.estimators_ = tree
     
-    def fit_stages(self, X, y, raw_predictions):
+    def fit_stages(self, X, y, raw_predictions, sample_weight, random_state):
         
         residuals = self.loss_.negative_gradient(y, raw_predictions)
+        tree = DecisionTreeRegressor(
+            criterion=self.criterion,
+            splitter='best',
+            max_depth=self.max_depth,
+            min_samples_split=self.min_samples_split,
+            min_samples_leaf=self.min_samples_leaf,
+            min_weight_fraction_leaf=self.min_weight_fraction_leaf,
+            min_impurity_decrease=self.min_impurity_decrease,
+            min_impurity_split=self.min_impurity_split,
+            max_features=self.max_features,
+            max_leaf_nodes=self.max_leaf_nodes,
+            random_state=random_state,
+            ccp_alpha=self.ccp_alpha)
+        
+        tree.fit(X, residuals, sample_weight=sample_weight, check_input=False)
+
+        h_m = tree.predict(X)
+        # -hm(x) ( -gamma*hm(x) +yi - Fm-1(x))
+        gamma = -h_m * (-raw_predictions * h_m + y - raw_predictions)
+        # print(gamma)
+        # print(f'Suma:{sum(gamma)}')
+        self.estimators_ = tree
         return residuals
     # def update_model(self, i, learning_rate):
     #     self.estimators[i] = self.estimators[i - 1] + learning_rate * \
@@ -119,8 +141,10 @@ class MyGradientBoosting():
 
                 raw_predicitons = self.loss_.get_init_raw_prediciton(X, self.init_)
                 print(raw_predicitons)
+
+
         #fit stage funckja?
-        n_stages = self.fit_stages(X, y, raw_predicitons)
+        n_stages = self.fit_stages(X, y, raw_predicitons, random_state=None, sample_weight=None)
 
         return n_stages
         #return raw_predicitons wyplute na konic calego algorytmu?
