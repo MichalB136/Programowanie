@@ -116,9 +116,9 @@ class MyGradientBoosting():
 
         h_m = tree.predict(X)
         # -hm(x) ( -gamma*hm(x) +yi - Fm-1(x))
-        gamma = -h_m * (-raw_predictions * h_m + y - raw_predictions)
-        # print(gamma)
-        # print(f'Suma:{sum(gamma)}')
+        gamma = -h_m * (-raw_predictions.ravel() * h_m + y.ravel() - raw_predictions.ravel())
+        gamma = sum(gamma)
+
         self.estimators_ = tree
         return residuals
     # def update_model(self, i, learning_rate):
