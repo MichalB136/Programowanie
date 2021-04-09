@@ -129,41 +129,9 @@ class MyGradientBoosting(BaseEnsemble):
 
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)    
         self.estimators_ = np.empty((self.n_estimators, self.loss_.K), dtype=np.object)
-        self.residual_ = np.empty((self.n_estimators, y.shape[0]), dtype=np.float64)
-        self.gamma_ = np.zeros((self.n_estimators, y.shape[0]), dtype=np.float64)
+        self.gamma_ = np.zeros(self.n_estimators) 
+        self.gamma = np.zeros((self.n_estimators, y.shape[0]), dtype=np.float64)
         self.estimators = np.zeros((self.n_estimators, X.shape[0]))
-        self._mean_y = np.mean(y)
-
-    def pseudo_res(self, i, y):
-        p_val = self.estimators[i - 1]
-        #Compute pseudo-residual
-        residual = [-(self.loss_(y_val, p_val)) for y_val in y] 
-        residual = np.asarray(residual, dtype=np.float64)
-        return residual
-
-    # def fit_stage(self, X, y, max_depth,
-    #                sample_weight, sample_mask, random_state):
-    #     #Fit weka learner 
-    #     self.residual_[i] = self.pseudo_res(i, y)
-
-    #     tree = DecisionTreeRegressor(
-    #         criterion=self.criterion,
-    #         splitter='best',
-    #         max_depth=self.max_depth,
-    #         min_samples_split=self.min_samples_split,
-    #         min_samples_leaf=self.min_samples_leaf,
-    #         min_weight_fraction_leaf=self.min_weight_fraction_leaf,
-    #         min_impurity_decrease=self.min_impurity_decrease,
-    #         min_impurity_split=self.min_impurity_split,
-    #         max_features=self.max_features,
-    #         max_leaf_nodes=self.max_leaf_nodes,
-    #         random_state=random_state,
-    #         ccp_alpha=self.ccp_alpha)
-        
-    #     tree.fit(X, self.residual_[i], sample_weight=sample_weight, 
-    #              check_input=False)
-
-    #     self.estimators_ = tree
     
     def _fit_stage(self, i, X, y, raw_predictions, sample_weight, sample_mask,
                    random_state, X_idx_sorted, X_csc=None, X_csr=None):
@@ -172,11 +140,12 @@ class MyGradientBoosting(BaseEnsemble):
         # original_y = y
 
         raw_predictions_copy = raw_predictions.copy()
-
+        
         for k in range(loss.K):
+            #2.1
             residual = loss.negative_gradient(y, raw_predictions_copy, k=k,
                                               sample_weight=sample_weight)
-            
+            #2.2
             tree = DecisionTreeRegressor(
                 criterion=self.criterion,
                 splitter='best',
@@ -193,46 +162,16 @@ class MyGradientBoosting(BaseEnsemble):
             X = X_csr if X_csr is not None else X
             tree.fit(X, residual, sample_weight=sample_weight,
                      check_input=False, X_idx_sorted=X_idx_sorted)
-
+            #2.3?
+            #Compute multiplayer gamma_m
+            self.gamma_[i] = loss.compute_gamma(tree, X, y, self.gamma, raw_predictions_copy)
+            #2.4
             loss.update_terminal_regions(
-                tree.tree_, X, y, residual, raw_predictions, sample_weight,
+                tree.tree_, X, y, self.gamma_[i], residual, raw_predictions, sample_weight,
                 sample_mask, learning_rate=self.learning_rate, k=k)      
 
             self.estimators_[i, k] = tree    
         return raw_predictions
-
-    # def fit_stages(self, X, y, raw_predictions, sample_weight, random_state):
-    #     for m in range(1, self.n_estimators + 1):
-    #         residuals = self.loss_.negative_gradient(y, raw_predictions)
-    #         tree = DecisionTreeRegressor(
-    #             criterion=self.criterion,
-    #             splitter='best',
-    #             max_depth=self.max_depth,
-    #             min_samples_split=self.min_samples_split,
-    #             min_samples_leaf=self.min_samples_leaf,
-    #             min_weight_fraction_leaf=self.min_weight_fraction_leaf,
-    #             min_impurity_decrease=self.min_impurity_decrease,
-    #             min_impurity_split=self.min_impurity_split,
-    #             max_features=self.max_features,
-    #             max_leaf_nodes=self.max_leaf_nodes,
-    #             random_state=random_state,
-    #             ccp_alpha=self.ccp_alpha)
-            
-    #         tree.fit(X, residuals, sample_weight=sample_weight, check_input=False)
-
-    #         h_m = tree.predict(X)
-    #         # -hm(x) ( -gamma*hm(x) +yi - Fm-1(x))
-    #         self.gamma_[m-1] = -h_m * (-raw_predictions.ravel() * h_m + y.ravel() - raw_predictions.ravel())
-    #         self.gamma_[m-1] = sum(self.gamma_[m-1])
-
-    #         self.estimators[m] = self.estimators[m-1] + self.learnig_rate * self.gamma_[m-1] * h_m
-
-    #         self.estimators_[m] = tree
-    #     return residuals
-
-    # def update_model(self, i, learning_rate):
-    #     self.estimators[i] = self.estimators[i - 1] + learning_rate * \
-    #         self.gamma_
 
     def _is_initialized(self):
         return len(getattr(self, 'estimators_', [])) > 0 
@@ -275,11 +214,13 @@ class MyGradientBoosting(BaseEnsemble):
                             raise ValueError(msg) from e
                         else:  # regular estimator whose input checking failed
                             raise
+                # 1.
                 raw_predictions = self.loss_.get_init_raw_prediciton(X, self.init_)
+                self.gamma = raw_predictions.copy()
 
             begin_at_stage = 0
             self._rng = check_random_state(self.random_state)
-        print(raw_predictions)
+        # print(raw_predictions)
         X_idx_sorted = None
         #fit stage funckja?
         n_stages = self._fit_stages(
