@@ -19,8 +19,8 @@ feature_names = ['age', 'location', 'square_footage']
 #%%
 X = pd.DataFrame(d, columns=feature_names)
 y = pd.DataFrame(d, columns=['price'])
-X = X.to_numpy(dtype=np.float32)
-y = y.to_numpy(dtype=np.float64)
+# X = X.to_numpy(dtype=np.float32)
+# y = y.to_numpy(dtype=np.float64)
 #%%
 regresor = MyGradientBoosting(loss='square', learning_rate=0.1, max_depth=5, n_estimators=10,
                               n_classes=1, criterion='mse', min_samples_split=2,
@@ -29,6 +29,9 @@ regresor = MyGradientBoosting(loss='square', learning_rate=0.1, max_depth=5, n_e
                               min_impurity_decrease=0, min_impurity_split=None,
                               max_features=None, random_state=None, ccp_alpha=0.0)
 test = regresor.fit(X, y)
+#%%
+regresor2 = GradientBoostingRegressor( n_estimators=10)
+test2 = regresor2.fit(X, y)
 # test = regresor.pseudo_res(1, y)
 # regresor.fit_stage(1, X, y, 5, None, None, None)
 # regresor.compute(1, y)
