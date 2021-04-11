@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.dummy import DummyClassifier, DummyRegressor
 
 
-class MeanSquareLossFunction():
+class LeastSquareLossFunction():
 
     def __init__(self, n_classes):
         if n_classes != 1:
@@ -41,3 +41,4 @@ class MeanSquareLossFunction():
                                 sample_weight, sample_mask,
                                 learning_rate=0.1, k=0):
         raw_predicitons[:, k] += learning_rate * tree.predict(X).ravel()
+        # raw_predicitons[:, k] += learning_rate * gamma * tree.predict(X).ravel()

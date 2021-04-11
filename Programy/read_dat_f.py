@@ -6,8 +6,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from sklearn.datasets import load_boston, make_hastie_10_2, make_classification
 from sklearn.metrics import mean_absolute_error
+from rulefit import RuleFit
 #%%
-from MyBoostingClassifier import MyGradientBoosting, MeanSquareLossFunction
+from MyBoostingClassifier import MyGradientBoosting, LeastSquareLossFunction
 #%%
 d = {'age': [5,11,14,8,12,10], 
      'location': [5,12,6,4,9,11], 
@@ -22,12 +23,7 @@ y = pd.DataFrame(d, columns=['price'])
 # X = X.to_numpy(dtype=np.float32)
 # y = y.to_numpy(dtype=np.float64)
 #%%
-regresor = MyGradientBoosting(loss='square', learning_rate=0.1, max_depth=5, n_estimators=10,
-                              n_classes=1, criterion='mse', min_samples_split=2,
-                              init = None,
-                              min_samples_leaf = 1,min_weight_fraction_leaf=0.0, 
-                              min_impurity_decrease=0, min_impurity_split=None,
-                              max_features=None, random_state=None, ccp_alpha=0.0)
+regresor = MyGradientBoosting()
 test = regresor.fit(X, y)
 #%%
 regresor2 = GradientBoostingRegressor( n_estimators=10)

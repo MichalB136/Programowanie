@@ -1,3 +1,4 @@
+import numbers
 import numpy as np
 
 from scipy.sparse import csc_matrix
@@ -12,7 +13,7 @@ from sklearn.ensemble._base import BaseEnsemble
 
 from time import time
 
-from MyLossFunction import MeanSquareLossFunction
+from MyLossFunction import LeastSquareLossFunction
 
 
 class VerboseReporter:
@@ -91,18 +92,16 @@ class VerboseReporter:
 
 class MyGradientBoosting(BaseEnsemble):
 
-    def __init__(self, loss, learning_rate, max_depth, 
-                 n_estimators, n_classes, criterion, min_samples_split,
-                 init,
-                 min_samples_leaf, min_weight_fraction_leaf,
-                 min_impurity_decrease, min_impurity_split, max_features, 
-                 random_state, ccp_alpha, verbose=0, max_lead_nodes=None,
-                 n_iter_no_change=None):
+    def __init__(self, *,loss='square', learning_rate=0.1, max_depth=3, 
+                 n_estimators=100, criterion='friedman_mse', min_samples_split=2,
+                 init=None,
+                 min_samples_leaf=1, min_weight_fraction_leaf=0,
+                 min_impurity_decrease=0, min_impurity_split=None, max_features=None, 
+                 random_state=None, ccp_alpha=0.0, verbose=0, max_lead_nodes=None):
         self.learning_rate = learning_rate
         self.loss = loss
         self.max_depth = max_depth
         self.n_estimators = n_estimators
-        self.n_classes = n_classes
         self.criterion = criterion
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -116,13 +115,13 @@ class MyGradientBoosting(BaseEnsemble):
         self.init = init        
         # self.subsample = subsample
         self.verbose = verbose
-        self.n_iter_no_change = n_iter_no_change
+        # self.n_iter_no_change = n_iter_no_change
 
     def _initialize(self, X, y):
         # inicjalizacja procesu
         if self.loss == 'square':
-            loss_class = MeanSquareLossFunction
-            self.loss_ = loss_class(self.n_classes)
+            loss_class = LeastSquareLossFunction
+            self.loss_ = loss_class(self.n_classes_)
         self.init_ = self.init
         if self.init_ is None:
             self.init_ = self.loss_.init_estimator()
@@ -162,7 +161,7 @@ class MyGradientBoosting(BaseEnsemble):
             X = X_csr if X_csr is not None else X
             tree.fit(X, residual, sample_weight=sample_weight,
                      check_input=False, X_idx_sorted=X_idx_sorted)
-            #2.3?
+            #2.3
             #Compute multiplayer gamma_m
             self.gamma_[i] = loss.compute_gamma(tree, X, y, self.gamma, raw_predictions_copy)
             #2.4
@@ -171,13 +170,65 @@ class MyGradientBoosting(BaseEnsemble):
                 sample_mask, learning_rate=self.learning_rate, k=k)      
 
             self.estimators_[i, k] = tree    
+       
         return raw_predictions
+
+    def _check_params(self):
+        
+        if self.n_estimators <= 0:
+            raise ValueError("n_estimators must be greater than 0 but "
+                             f"was {self.n_estimators}")
+
+        if self.learning_rate <= 0.0:
+            raise ValueError("learning_rate must be greather than 0 but "
+                             f"was {self.learning_rate}")
+
+        if isinstance(self.max_features, str):
+            if self.max_features == "auto":
+                # if is_classification
+                if self.n_classes_ > 1:
+                    max_features = max(1, int(np.sqrt(self.n_features_)))
+                else:
+                    # is regression
+                    max_features = self.n_features_
+            elif self.max_features == "sqrt":
+                max_features = max(1, int(np.sqrt(self.n_features_)))
+            elif self.max_features == "log2":
+                max_features = max(1, int(np.log2(self.n_features_)))
+            else:
+                raise ValueError("Invalid value for max_features: %r. "
+                                 "Allowed string values are 'auto', 'sqrt' "
+                                 "or 'log2'." % self.max_features)
+        elif self.max_features is None:
+            max_features = self.n_features_
+        elif isinstance(self.max_features, numbers.Integral):
+            max_features = self.max_features
+        else: # float
+            if 0. < self.max_features <= 1.:
+                max_features = max(int(self.max_features * 
+                                       self.n_features_), 1)
+            else:
+                raise ValueError("max_features must be in (0, n_features]")
+
+        self.max_features_ = max_features
+
+
+    def _clear_state(self):
+        if hasattr(self, 'estimators_'):
+            self.estimators_ = np.empty((0,0), dtype=np.object)
+        if hasattr(self, 'train_score_'):
+            del self.train_score_
+        if hasattr(self, 'init_'):
+            del self.init_
+        if hasattr(self, '_rng'):
+            del self._rng
 
     def _is_initialized(self):
         return len(getattr(self, 'estimators_', [])) > 0 
 
     def fit(self, X, y, sample_weight=None):
 
+        self._clear_state()
 
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
                                    dtype=np.float32, multi_output=True)
@@ -189,6 +240,8 @@ class MyGradientBoosting(BaseEnsemble):
 
         y = column_or_1d(y, warn=True)
         y = self._validate_y(y, sample_weight)
+
+        self._check_params()
         
         if not self._is_initialized():
 
