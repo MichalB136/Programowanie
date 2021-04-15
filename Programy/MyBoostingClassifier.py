@@ -161,20 +161,18 @@ class MyGradientBoosting(BaseEnsemble):
             X = X_csr if X_csr is not None else X
             tree.fit(X, residual, sample_weight=sample_weight,
                      check_input=False, X_idx_sorted=X_idx_sorted)
-            #2.3
-            #Compute multiplayer gamma_m
-            self.gamma_[i] = loss.compute_gamma(tree, X, y, self.gamma, raw_predictions_copy)
             #2.4
-            loss.update_terminal_regions(
-                tree.tree_, X, y, self.gamma_[i], residual, raw_predictions, sample_weight,
-                sample_mask, learning_rate=self.learning_rate, k=k)      
 
+            loss.update_terminal_regions(
+                tree.tree_, X, y, residual, raw_predictions, sample_weight,
+                sample_mask, learning_rate=self.learning_rate, k=k)      
+            # print(raw_predictions)
+            # print("--")
             self.estimators_[i, k] = tree    
        
         return raw_predictions
 
     def _check_params(self):
-        
         if self.n_estimators <= 0:
             raise ValueError("n_estimators must be greater than 0 but "
                              f"was {self.n_estimators}")
@@ -275,14 +273,13 @@ class MyGradientBoosting(BaseEnsemble):
             self._rng = check_random_state(self.random_state)
         # print(raw_predictions)
         X_idx_sorted = None
-        #fit stage funckja?
+
         n_stages = self._fit_stages(
             X, y, raw_predictions, sample_weight, self._rng, 
             begin_at_stage, X_idx_sorted)
 
         self.n_estimators_ = n_stages
         return self
-        #return raw_predictions wyplute na konic calego algorytmu?
 
     def _fit_stages(self, X, y, raw_predictions, sample_weight, random_state,
                     begin_at_stage=0, X_idx_sorted=None):
@@ -317,3 +314,14 @@ class MyGradientBoosting(BaseEnsemble):
             y = y.astype(np.flout64)
         
         return y
+
+    def predict(self, X):
+
+        X = check_array(X, dtype=np.float32, order="C", accept_sparse='csr')
+        raw_predictions = self.loss_.get_init_raw_prediciton(X, self.init_)
+        # print(raw_predictions)
+        for estimator in self.estimators_:
+            # estimator.predict(X)
+            raw_predictions[:,0] += self.learning_rate * estimator[0].predict(X)            
+
+        return raw_predictions
