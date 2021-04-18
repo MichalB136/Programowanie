@@ -62,11 +62,11 @@ class BinomialDeviance():
                 sample_weight * ((y * raw_predictions) - 
                                  np.logaddexp(0, raw_predictions))))
 
-    def negative_gradient(self, y, raw_predicitons, **kargs):
+    def negative_gradient(self, y, raw_predictions, **kargs):
 
-        return y - expit(raw_predicitons.ravel())
+        return y - expit(raw_predictions.ravel())
 
-    def update_terminal_regions(self, tree, X, y, residual, raw_predicitons,
+    def update_terminal_regions(self, tree, X, y, residual, raw_predictions,
                                 sample_weight, sample_mask,
                                 learning_rate=0.1, k=0):
         terminal_regions = tree.apply(X)
@@ -77,9 +77,9 @@ class BinomialDeviance():
         for leaf in np.where(tree.children_left == TREE_LEAF)[0]:
             self._update_terminal_region(tree, masked_termianl_regions,
                                          leaf, X, y, residual, 
-                                         raw_predicitons[:, k], sample_weight)
+                                         raw_predictions[:, k], sample_weight)
 
-        raw_predicitons[:, k] += \
+        raw_predictions[:, k] += \
             learning_rate * tree.value[:, 0, 0].take(terminal_regions, axis=0)
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
@@ -88,7 +88,7 @@ class BinomialDeviance():
         terminal_region = np.where(terminal_regions == leaf)[0]
         residual = residual.take(terminal_region, axis=0)
         y = y.take(terminal_region, axis=0)
-        sample_weight = sample_weight.tage(terminal_region, axis=0)
+        sample_weight = sample_weight.take(terminal_region, axis=0)
 
         numerator = np.sum(sample_weight * residual)
         denominator = np.sum(sample_weight *
@@ -112,7 +112,7 @@ class BinomialDeviance():
         proba = self._raw_prediction_to_proba(raw_predictions)
         return np.argmax(proba, axis=1)
 
-    def get_init_raw_predictions(self, X, estimator):
+    def get_init_raw_prediciton(self, X, estimator):
         
         probas = estimator.predict_proba(X)
         proba_pos_class = probas[:, 1]

@@ -4,11 +4,11 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
-from sklearn.datasets import load_boston, make_hastie_10_2, make_classification
+from sklearn.datasets import load_boston, make_hastie_10_2, make_classification, load_iris
 from sklearn.metrics import mean_absolute_error
 from rulefit import RuleFit
 #%%
-from MyBoostingClassifier import MyGradientBoosting, LeastSquareLossFunction
+from MyBoostingClassifier import MyGradientBoosting
 #%%
 d = {'age': [5,11,14,8,12,10], 
      'location': [5,12,6,4,9,11], 
@@ -34,8 +34,8 @@ y_test = pd.DataFrame(d_test, columns=['price'])
 # y = y.to_numpy(dtype=np.float64)
 #%%
 regresor = MyGradientBoosting(n_estimators=100)
-test = regresor.fit(X, y)
-y_predict = test.predict(X)
+test = regresor.fit(X2, y2)
+# y_predict = test.predict(X)
 
 #%%
 regresor2 = GradientBoostingRegressor( n_estimators=10)
@@ -44,6 +44,19 @@ test2 = regresor2.fit(X, y)
 # regresor.fit_stage(1, X, y, 5, None, None, None)
 # regresor.compute(1, y)
 
+
+#%%
+iris = load_iris()
+X = pd.DataFrame(iris.data, columns=iris.feature_names)
+y = pd.Series(iris.target)
+X_train, X_test, y_train, y_test = train_test_split(X, y)
+#%%
+y2 = y.iloc[0:100]
+X2 = X.iloc[0:100]
+
+# for i, t in enumerate(y):
+#      if t == 2:
+#           print(i)
 #%%
 boston = load_boston()
 X = pd.DataFrame(boston.data, columns=boston.feature_names)

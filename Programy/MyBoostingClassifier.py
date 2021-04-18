@@ -10,10 +10,11 @@ from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.utils.validation import _check_sample_weight
 from sklearn.utils import column_or_1d, check_array, check_random_state
 from sklearn.ensemble._base import BaseEnsemble
+from sklearn.utils.multiclass import check_classification_targets
 
 from time import time
 
-from MyLossFunction import LeastSquareLossFunction
+from MyLossFunction import LeastSquareLossFunction, BinomialDeviance
 
 
 class VerboseReporter:
@@ -92,7 +93,7 @@ class VerboseReporter:
 
 class MyGradientBoosting(BaseEnsemble):
 
-    def __init__(self, *,loss='square', learning_rate=0.1, max_depth=3, 
+    def __init__(self, *,loss='deviance', learning_rate=0.1, max_depth=3, 
                  n_estimators=100, criterion='friedman_mse', min_samples_split=2,
                  init=None,
                  min_samples_leaf=1, min_weight_fraction_leaf=0,
@@ -121,6 +122,9 @@ class MyGradientBoosting(BaseEnsemble):
         # inicjalizacja procesu
         if self.loss == 'square':
             loss_class = LeastSquareLossFunction
+            self.loss_ = loss_class(self.n_classes_)
+        elif self.loss == 'deviance':
+            loss_class = BinomialDeviance
             self.loss_ = loss_class(self.n_classes_)
         self.init_ = self.init
         if self.init_ is None:
@@ -166,7 +170,7 @@ class MyGradientBoosting(BaseEnsemble):
             loss.update_terminal_regions(
                 tree.tree_, X, y, residual, raw_predictions, sample_weight,
                 sample_mask, learning_rate=self.learning_rate, k=k)      
-            # print(raw_predictions)
+            print(raw_predictions)
             # print("--")
             self.estimators_[i, k] = tree    
        
@@ -249,7 +253,7 @@ class MyGradientBoosting(BaseEnsemble):
                 raw_predictions = np.zeros(shape=(X.shape[0], self.loss_.K),
                                         dtype=np.float64)
             else:
-                if sample_weight_is_none == None:
+                if sample_weight_is_none:
                     self.init_.fit(X,y)
                 else:
                     msg = ("The initial estimator {} does not support sample "
@@ -308,11 +312,15 @@ class MyGradientBoosting(BaseEnsemble):
         return i + 1
 
     def _validate_y(self, y, sample_weight):
-
-        self.n_classes_ = 1
-        if y.dtype.kind == 'O':
-            y = y.astype(np.flout64)
-        
+        check_classification_targets(y)
+        self.classes_, y = np.unique(y, return_inverse=True)
+        n_trim_classes = np.count_nonzero(np.bincount(y, sample_weight))
+        if n_trim_classes < 2:
+            raise ValueError("y contains %d class after sample_weight "
+                             "trimmed classes with zero weights, while a "
+                             "minimum of 2 classes are required."
+                             % n_trim_classes)
+        self.n_classes_ = len(self.classes_)
         return y
 
     def predict(self, X):
