@@ -41,10 +41,13 @@ class LeastSquareLossFunction():
 
 class BinomialDeviance():
     
+    is_multi_class = False
+    
     def __init__(self, n_classes):
         if n_classes != 2:
             raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
-                             .format(self.__class__.__name__, n_classes))
+                             .format(self.__class__.__name__, n_classes))       
+        n_classes = 1
         self.K = n_classes
 
     def init_estimator(self):
@@ -73,12 +76,11 @@ class BinomialDeviance():
 
         masked_termianl_regions = terminal_regions.copy()
         masked_termianl_regions[~sample_mask] = -1
-
         for leaf in np.where(tree.children_left == TREE_LEAF)[0]:
             self._update_terminal_region(tree, masked_termianl_regions,
                                          leaf, X, y, residual, 
                                          raw_predictions[:, k], sample_weight)
-
+        
         raw_predictions[:, k] += \
             learning_rate * tree.value[:, 0, 0].take(terminal_regions, axis=0)
 

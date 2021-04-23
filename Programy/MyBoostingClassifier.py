@@ -98,7 +98,7 @@ class MyGradientBoosting(BaseEnsemble):
                  init=None,
                  min_samples_leaf=1, min_weight_fraction_leaf=0,
                  min_impurity_decrease=0, min_impurity_split=None, max_features=None, 
-                 random_state=None, ccp_alpha=0.0, verbose=0, max_lead_nodes=None):
+                 random_state=None, ccp_alpha=0.0, verbose=0, max_leaf_nodes=None):
         self.learning_rate = learning_rate
         self.loss = loss
         self.max_depth = max_depth
@@ -110,7 +110,7 @@ class MyGradientBoosting(BaseEnsemble):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.max_features = max_features
-        self.max_leaf_nodes = max_lead_nodes
+        self.max_leaf_nodes = max_leaf_nodes
         self.random_state = random_state
         self.ccp_alpha = ccp_alpha
         self.init = init        
@@ -166,11 +166,10 @@ class MyGradientBoosting(BaseEnsemble):
             tree.fit(X, residual, sample_weight=sample_weight,
                      check_input=False, X_idx_sorted=X_idx_sorted)
             #2.4
-
             loss.update_terminal_regions(
                 tree.tree_, X, y, residual, raw_predictions, sample_weight,
-                sample_mask, learning_rate=self.learning_rate, k=k)      
-            print(raw_predictions)
+                sample_mask, learning_rate=self.learning_rate, k=k)    
+            # print(raw_predictions)
             # print("--")
             self.estimators_[i, k] = tree    
        
@@ -325,11 +324,20 @@ class MyGradientBoosting(BaseEnsemble):
 
     def predict(self, X):
 
+        raw_predictions = self.decision_fucntion(X)
+        encoded_labels = \
+            self.loss_._raw_prediction_to_decision(raw_predictions)
+
+        return self.classes_.take(encoded_labels,axis=0)
+
+    def decision_fucntion(self, X):
+
         X = check_array(X, dtype=np.float32, order="C", accept_sparse='csr')
         raw_predictions = self.loss_.get_init_raw_prediciton(X, self.init_)
         # print(raw_predictions)
         for estimator in self.estimators_:
             # estimator.predict(X)
-            raw_predictions[:,0] += self.learning_rate * estimator[0].predict(X)            
-
+            raw_predictions[:,0] += self.learning_rate * estimator[0].predict(X) 
+        if raw_predictions.shape[1] == 1:
+            return raw_predictions.ravel()
         return raw_predictions
