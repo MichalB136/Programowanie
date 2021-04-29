@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
+from sklearn.utils import check_array
 from MyBoostingClassifier import MyGradientBoosting
 from sklearn.linear_model import LassoCV,LogisticRegressionCV
 from functools import reduce
@@ -134,22 +135,22 @@ class RuleEnsemble():
                 feature_name = feature
             rule_condtion = RuleCondition(feature, threshold, operator, 
                                           tree.n_node_samples[node_id] 
-                                          / float(tree.n_nodes_samples[0]),
+                                          / float(tree.n_node_samples[0]),
                                           feature_name)
             new_conditions = conditions + [rule_condtion]
         else:
             new_conditions = []
 
-        if tree.childer_left[node_id] != tree.children_right[node_id]:
+        if tree.children_left[node_id] != tree.children_right[node_id]:
             feature = tree.feature[node_id]
             threshold = tree.threshold[node_id]
 
             left_node_id = tree.children_left[node_id]
-            self.traverse_nodes(left_node_id, "<=", threshold, 
+            self.traverse_nodes(tree, feature_names, rules, left_node_id, "<=", threshold, 
                                 feature, new_conditions)
 
             right_node_id = tree.children_right[node_id]
-            self.traverse_nodes(right_node_id, ">", threshold, 
+            self.traverse_nodes(tree, feature_names, rules, right_node_id, ">", threshold, 
                                 feature, new_conditions)
         else:
             if len(new_conditions) > 0:
@@ -165,20 +166,18 @@ class RuleEnsemble():
             rules = self.extract_rules_from_tree(tree[0].tree_, 
                                             feature_names=self.feature_names)
             self.rules.update(rules)
-            self.rules = list(self.rules)
+            
 
     def transform(self, X, coefs=None):
 
         self._extract_rules(self.tree_list, self.feature_names)
-
-        rule_list = list(self.rules) ## TODO: sprawdzic czy to potrzebne
-
+        rule_list = list(self.rules)
         if coefs is None:
             return np.array([rule.transform(X) for rule in rule_list]).T
         else:
             res = np.array([rule_list[i_rule].transform(X) for i_rule \
                   in np.arange(len(rule_list)) if coefs[i_rule] != 0]).T
-            res_ = np.zeros([X.shape(0), len(rule_list)])
+            res_ = np.zeros([X.shape[0], len(rule_list)])
             res_[:, coefs != 0] = res
             return res_
         
@@ -220,6 +219,8 @@ class MyRuleFit(BaseEstimator, TransformerMixin):
                  
     def fit(self, X, y=None, feature_names=None):
 
+        X, y = self._validate_data(X, y, accept_sparse=['csr','csc', 'coo'],
+                                   dtype=np.float32, multi_output=True)
         n_samples = X.shape[0]
         if feature_names is None:
             self.feature_names = ['feature_' + str(x) for x in range(0, X.shape[1])]
@@ -227,8 +228,7 @@ class MyRuleFit(BaseEstimator, TransformerMixin):
             self.feature_names = feature_names
         if 'r' in self.model_type:
             if self.tree_generator is None:
-                n_estimators_default = \
-                    int(np.ceil(self.max_rules / self.tree_size))
+                n_estimators_default = int(np.ceil(self.max_rules / self.tree_size))
                 self.sample_fract = min(0.5, (100 + 6 * np.sqrt(n_samples)) 
                                                                 / n_samples)
                 if self.rfmode == 'classify':
@@ -299,3 +299,61 @@ class MyRuleFit(BaseEstimator, TransformerMixin):
             self.intercept_ = self.lscv.intercept_[0]
                     
         return self
+
+    def predict(self, X):
+        
+        X = check_array(X, dtype=np.float32, order="C", accept_sparse='csr')
+        X_concat = np.zeros([X.shape[0],0])
+        if 'l' in self.model_type:
+            if self.lin_standardise:
+                X_concat = np.concatenate((X_concat, 
+                                           self.friedscale.scale(X)),axis=1)
+            else:
+                X_concat = np.concatenate((X_concate,X), axis=1)
+        if 'r' in self.model_type:
+            rule_coefs = self.coef_[-len(self.rule_ensemble.rules):]
+            if len(rule_coefs) > 0:
+                X_rules = self.rule_ensemble.transform(X, coefs=rule_coefs)
+                if X_rules.shape[0] > 0:
+                    X_concat = np.concatenate((X_concat, X_rules), axis=1)
+        return self.lscv.predict(X_concat)  
+
+    def get_rules(self, exclude_zero_coef=False, subregion=None):
+
+        n_features = len(self.coef_) - len(self.rule_ensemble.rules)
+        rule_ensemble = list(self.rule_ensemble.rules)
+        output_rules = []
+
+        for i in range(n_features):
+            if self.lin_standardise:
+                coef = self.coef_[i] * self.friedscale.scale_multipliers[i]
+            else:
+                coef = self.coef_[i]
+            if subregion is None:
+                importance = abs(coef) * self.stddev[i]
+            else:
+                subregion = np.array(subregion)
+                importance = sum(abs(coef) * abs(
+                                                 [x[i] for x in \
+                                                    self.winsorizer.trim(subregion)]))
+            output_rules += [(self.feature_names[i], 'linear', coef, 1, importance)]
+
+        for  i in range(len(self.rule_ensemble.rules)):
+            rule = rule_ensemble[i]
+            coef = self.coef_[i + n_features]
+
+            if subregion is None:
+                importance = abs(coef) * (rule.support * (1 - rule.support)) ** (1/2)
+            else:
+                rkx = rule.transform(subregion)
+                importance = sum(abs(coef) * \
+                                        abs(rkx - rule.support)) / len(subregion)
+
+            output_rules += [(rule.__str__(), 'rule', coef, rule.support,importance)]
+        
+        rules = pd.DataFrame(output_rules, columns=["rule", "type",
+                                                    "coef", "support",
+                                                    "importance"])
+        if exclude_zero_coef:
+            rules = rules.ix(rules.coef != 0)
+        return rules
