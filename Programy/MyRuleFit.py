@@ -355,5 +355,45 @@ class MyRuleFit(BaseEstimator, TransformerMixin):
                                                     "coef", "support",
                                                     "importance"])
         if exclude_zero_coef:
-            rules = rules.ix(rules.coef != 0)
+            rules = rules.loc[rules.coef != 0]
         return rules
+
+    def _find_mk(self, rule:str):
+
+        feature_count = 0
+        for feature in self.feature_names:
+            if feature in rule:
+                feature_count += 1
+        return(feature_count)
+
+    def get_feature_importance(self, exclude_zero_coef=False, subregion=None,
+                               scaled=False):
+        
+        rules = self.get_rules(exclude_zero_coef, subregion)
+
+        feature_in_rule = rules.rule.apply(lambda x: self._find_mk(x))
+
+        feature_imp = list()
+        for feature in self.feature_names:
+            feature_rk = rules.rule.apply(lambda x: feature in x)
+
+            linear_imp = rules[(rules.type == 'linear')  & 
+                               (rules.rule == feature)].importance.values
+
+            rule_imp = rules[rules.type != 'linear'].importance[feature_rk]
+
+            mk_array = feature_in_rule[feature_rk]
+            if not linear_imp:
+                 feature_imp.append(float((rule_imp/mk_array).sum()))
+            else:
+                feature_imp.append(float((rule_imp/mk_array).sum() + linear_imp))
+        
+        if scaled:
+            feature_imp = 100*(feature_imp/np.array(feature_imp).max())
+        
+        return pd.DataFrame({'feature': self.feature_names, 
+                             'importance': feature_imp})
+
+
+
+
